@@ -1,9 +1,19 @@
 #!/bin/sh
 
-if [ $# -lt 1 ]
+SCRIPT_VERSION="1.0"
+
+if [ $# -lt 1 ] || [[ ! $1 =~ ^[0-9] ]]
 then
-  echo "Change Xcode project version and build number, create git tag, and update podspec."
-  echo "Usage: $0 <version>"
+  echo ""
+  echo "VersionIt $SCRIPT_VERSION is a script to change the version in several places:"
+  echo "  * Xcode project version and build number"
+  echo "  * CHANGELLOG.md [Unreleased] heading"
+  echo "  * podspec version (if it exists)"
+  echo "  * git tag"
+  echo ""
+  echo "  Usage:"
+  echo "    $(basename $0) <version>"
+  echo ""
   exit
 fi
 
@@ -106,7 +116,7 @@ git push --tags
 # update cocoapods
 if [ ! -z $PODSPEC ]
 then 
-  cd $(echo "$PODSPEC" | xargs dirname)
+  cd $(dirname "$PODSPEC")
   pod trunk push
 fi
 
