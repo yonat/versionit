@@ -1,9 +1,9 @@
 **VersionIt** is a script to change the version in several places:
 
-* Xcode project version and build number"
-* CHANGELLOG.md [Unreleased] heading"
-* podspec version (if it exists)"
-* git tag"
+* Xcode project version and build number
+* CHANGELLOG.md [Unreleased] heading
+* podspec version (if it exists)
+* git tag
 
 ## Installation
 
