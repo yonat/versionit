@@ -1,0 +1,114 @@
+#!/bin/sh
+
+if [ $# -lt 1 ]
+then
+  echo "Change Xcode project version and build number, create git tag, and update podspec."
+  echo "Usage: $0 <version>"
+  exit
+fi
+
+VERSION="$1"
+
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+# ensure current branch is master
+BRANCH=$(git rev-parse --abbrev-ref HEAD)
+if [ $BRANCH != "master" ]
+then
+  echo -e "${RED}Current branch is '$BRANCH', please checkout 'master'.${NC}"
+  exit
+fi
+
+# ensure not behind remote/master
+git fetch
+COMMITS_BEHIND_ORIGIN=$(git log HEAD..origin/master --oneline | wc -l | tr -d '[:space:]')
+if [ $COMMITS_BEHIND_ORIGIN != "0" ]
+then
+  git status
+  exit
+fi
+
+# ensure new version is greater than last one
+LATEST_GIT_TAG=$(git describe --tags --always --abbrev=0)
+if [[ ! $LATEST_GIT_TAG < $VERSION ]]
+then
+  echo -e "${RED}Latest version is $LATEST_GIT_TAG, please use a greater version number.${NC}"
+  exit
+fi
+
+# change to dir with xcodeproj
+CURRENT_DIR=$(pwd)
+PROJECT_DIR=$(find . -maxdepth 2 -type d -name '*.xcodeproj' -print -quit | xargs dirname)
+cd $PROJECT_DIR
+
+# change Xcode project version
+xcrun agvtool new-marketing-version $VERSION
+
+# change Xcode project build number
+NUMBER_OF_COMMITS=$(git rev-list HEAD --count)
+xcrun agvtool new-version -all $NUMBER_OF_COMMITS
+
+# update CHANGELOG.md [Unreleased]
+cd $CURRENT_DIR
+CHANGELOG=CHANGELOG.md
+if [ ! -f $CHANGELOG ]
+then
+  CHANGELOG=../CHANGELOG.md
+fi
+if [ ! -f $CHANGELOG ]
+then
+  echo -e "${RED}Cannot find CHANGELOG.md in current directory or its parent.${NC}"
+  exit
+fi
+DATE=`date +%Y-%m-%d`
+echo "Updating $CHANGELOG"
+sed -i '' "s/\[Unreleased\]/[$VERSION] - $DATE/" $CHANGELOG
+
+# update podspec
+PODSPEC=$(find . -name "*.podspec")
+if [ -z $PODSPEC ]
+then
+  PODSPEC=$(find .. -maxdepth 1 -name '*.podspec')
+fi
+if [ ! -z $PODSPEC ]
+then 
+  echo "Updating $PODSPEC"
+  sed -i '' "s/$LATEST_GIT_TAG/$VERSION/" $PODSPEC
+fi
+
+# git add changes
+git add $PODSPEC
+git add $CHANGELOG
+git add \*Info.plist
+
+# review changes
+echo -e "\n${BLUE}Press any key to review the changes before comitting them...${NC}"
+read -n 1 -s -r -p ""
+git diff --cached
+echo -e "\n\n${BLUE}Confirm these changes and commit?${NC}"
+select yn in Yes No
+do
+  case $yn in
+    Yes ) break;;
+    No ) echo -e "${BLUE}\nSorry, my bad. Please review git status and cleanup the mess.${NC}"; exit;;
+  esac
+done
+
+# commit and push
+git commit -m "bump version to $VERSION"
+git tag $VERSION
+git push
+git push --tags
+
+# update cocoapods
+if [ ! -z $PODSPEC ]
+then 
+  cd $(echo "$PODSPEC" | xargs dirname)
+  pod trunk push
+fi
+
+echo -e "${GREEN}\nAll done!${NC}"
+
