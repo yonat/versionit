@@ -1,6 +1,6 @@
 #!/bin/sh
 
-SCRIPT_VERSION="1.0.1"
+SCRIPT_VERSION="1.0.2"
 
 if [ $# -lt 1 ] || [[ ! $1 =~ ^[0-9] ]]
 then
@@ -116,9 +116,14 @@ git push --tags
 
 # update cocoapods
 if [ ! -z $PODSPEC ]
-then 
-  cd $(dirname "$PODSPEC")
-  pod trunk push
+then
+  POD_NAME=$(basename "$PODSPEC" .podspec)
+  pod trunk info $POD_NAME &>/dev/null
+  if [ $? -eq 0 ]
+  then
+    cd $(dirname "$PODSPEC")
+    pod trunk push
+  fi
 fi
 
 echo -e "${GREEN}\nAll done!${NC}"
