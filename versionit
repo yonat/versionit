@@ -1,6 +1,6 @@
 #!/bin/sh
 
-SCRIPT_VERSION="1.0.2"
+SCRIPT_VERSION="1.0.3"
 
 if [ $# -lt 1 ] || [[ ! $1 =~ ^[0-9] ]]
 then
@@ -52,7 +52,7 @@ fi
 
 # change to dir with xcodeproj
 CURRENT_DIR=$(pwd)
-PROJECT_DIR=$(find . -maxdepth 2 -type d -name '*.xcodeproj' -print -quit | xargs dirname)
+PROJECT_DIR=$(find . -maxdepth 1 -type d -name '*.xcodeproj' -print -quit | xargs dirname)
 cd $PROJECT_DIR
 
 # change Xcode project version
