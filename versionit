@@ -1,6 +1,6 @@
 #!/bin/sh
 
-SCRIPT_VERSION="1.0.4"
+SCRIPT_VERSION="1.1.0"
 
 if [ $# -lt 1 ] || [[ ! $1 =~ ^[0-9] ]]
 then
@@ -85,7 +85,7 @@ then
   PODSPEC=$(find .. -maxdepth 1 -name '*.podspec')
 fi
 if [ ! -z $PODSPEC ]
-then 
+then
   echo "Updating $PODSPEC"
   sed -i '' "s/$LATEST_GIT_TAG/$VERSION/" $PODSPEC
 fi
@@ -100,11 +100,12 @@ echo -e "\n${BLUE}Press any key to review the changes before comitting them...${
 read -n 1 -s -r -p ""
 git diff --cached
 echo -e "\n\n${BLUE}Confirm these changes and commit?${NC}"
-select yn in Yes No
+select yn in Yes No Cherrypick
 do
   case $yn in
     Yes ) break;;
     No ) echo -e "${BLUE}\nSorry, my bad. Please review git status and cleanup the mess.${NC}"; exit;;
+    Cherrypick ) git reset; git add -p; break;;
   esac
 done
 
@@ -127,4 +128,3 @@ then
 fi
 
 echo -e "${GREEN}\nAll done!${NC}"
-
