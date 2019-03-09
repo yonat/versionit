@@ -1,6 +1,6 @@
 #!/bin/sh
 
-SCRIPT_VERSION="1.1.0"
+SCRIPT_VERSION="1.1.1"
 
 if [ $# -lt 1 ] || [[ ! $1 =~ ^[0-9] ]]
 then
@@ -44,7 +44,7 @@ fi
 
 # ensure new version is greater than last one
 LATEST_GIT_TAG=$(git describe --tags --always --abbrev=0)
-if [[ ! $LATEST_GIT_TAG < $VERSION ]]
+if [[ $LATEST_GIT_TAG == \d* ]] && [[ ! $LATEST_GIT_TAG < $VERSION ]]
 then
   echo -e "${RED}Latest version is $LATEST_GIT_TAG, please use a greater version number.${NC}"
   exit
