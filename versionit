@@ -12,7 +12,7 @@ then
   echo "  * git tag"
   echo ""
   echo "  Usage:"
-  echo "    $(basename $0) <version>"
+  echo "    $(basename $0) <version> [<target>]"
   echo ""
   exit
 fi
@@ -43,17 +43,23 @@ then
 fi
 
 # ensure new version is greater than last one
-LATEST_GIT_TAG=$(git describe --tags --always --abbrev=0)
+LATEST_GIT_TAG=$(git describe --tags --always --abbrev=0 --match=$2*)
+LATEST_GIT_TAG=${LATEST_GIT_TAG#"$2-"}
 if [[ $LATEST_GIT_TAG == \d* ]] && [[ ! $LATEST_GIT_TAG < $VERSION ]]
 then
   echo -e "${RED}Latest version is $LATEST_GIT_TAG, please use a greater version number.${NC}"
   exit
 fi
+[[ -z $2 ]] && TAG="$VERSION" || TAG="$2-$VERSION"
 
 # change to dir with xcodeproj
 CURRENT_DIR=$(pwd)
 PROJECT_DIR=$(find . -maxdepth 1 -type d -name '*.xcodeproj' -print -quit | xargs dirname)
 cd $PROJECT_DIR
+
+# find target
+PROJECT_NAME=$(find . -maxdepth 1 -type d -name '*.xcodeproj' -print -quit | xargs -I {} basename {} .xcodeproj)
+TARGET=${2:-$PROJECT_NAME}
 
 # change Xcode project version
 xcrun agvtool new-marketing-version $VERSION
@@ -63,9 +69,8 @@ NUMBER_OF_COMMITS=$(git rev-list HEAD --count)
 xcrun agvtool new-version -all $NUMBER_OF_COMMITS
 
 # update Settings.bundle
-find . -path '**/Settings.bundle/Root.plist' \
-  -exec /usr/libexec/PlistBuddy -c "Set :PreferenceSpecifiers:0:DefaultValue $VERSION" {} \; \
-  -exec git add {} \;
+SETTINGS_PLIST="./$TARGET/Settings.bundle/Root.plist"
+/usr/libexec/PlistBuddy -c "Set :PreferenceSpecifiers:0:DefaultValue $VERSION '($NUMBER_OF_COMMITS)'" $SETTINGS_PLIST
 
 # update CHANGELOG.md [Unreleased]
 cd $CURRENT_DIR
@@ -81,7 +86,7 @@ then
 fi
 DATE=`date +%Y-%m-%d`
 echo "Updating $CHANGELOG"
-sed -i '' "s/^## *\[[a-zA-Z]*\].*/## [$VERSION] - $DATE/" $CHANGELOG
+sed -i '' "s/^## *\[[a-zA-Z]*\].*/## [$TAG] - $DATE/" $CHANGELOG
 
 # update podspec
 PODSPEC=$(find . -name "*.podspec")
@@ -98,7 +103,9 @@ fi
 # git add changes
 git add $PODSPEC
 git add $CHANGELOG
-git add -u \*Info.plist
+git add $SETTINGS_PLIST
+git add -u $TARGET/Info.plist
+git checkout \*Info.plist
 find . -maxdepth 2 -name 'project.pbxproj' -exec git add -u {} \;
 
 # review changes
@@ -114,8 +121,8 @@ do
 done
 
 # commit and push
-git commit -m "bump version to $VERSION"
-git tag $VERSION
+git commit -m "bump version to $TAG"
+git tag $TAG
 git push
 git push --tags
 

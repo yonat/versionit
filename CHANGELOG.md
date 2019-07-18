@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 - update Settings.bundle.
+- optional target argument.
+- only change version for specified target (default is same as proj name).
 
 ### Changed
 - don't wait before showing changed files.
