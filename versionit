@@ -63,7 +63,9 @@ NUMBER_OF_COMMITS=$(git rev-list HEAD --count)
 xcrun agvtool new-version -all $NUMBER_OF_COMMITS
 
 # update Settings.bundle
-find . -path '**/Settings.bundle/Root.plist' -exec /usr/libexec/PlistBuddy -c "Set :PreferenceSpecifiers:0:DefaultValue $VERSION" {} \;
+find . -path '**/Settings.bundle/Root.plist' \
+  -exec /usr/libexec/PlistBuddy -c "Set :PreferenceSpecifiers:0:DefaultValue $VERSION" {} \; \
+  -exec git add {} \;
 
 # update CHANGELOG.md [Unreleased]
 cd $CURRENT_DIR
@@ -97,10 +99,9 @@ fi
 git add $PODSPEC
 git add $CHANGELOG
 git add -u \*Info.plist
+find . -maxdepth 2 -name 'project.pbxproj' -exec git add -u {} \;
 
 # review changes
-echo -e "\n${BLUE}Press any key to review the changes before comitting them...${NC}"
-read -n 1 -s -r -p ""
 git diff --cached
 echo -e "\n\n${BLUE}Confirm these changes and commit?${NC}"
 select yn in Yes No Cherrypick

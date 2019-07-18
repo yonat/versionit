@@ -10,6 +10,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Added
 - update Settings.bundle.
 
+### Changed
+- don't wait before showing changed files.
+
+### Fixed
+- commit changed proj file.
+
 ## [1.1.1] - 2019-03-09
 
 ### Fixed
