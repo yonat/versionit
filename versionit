@@ -1,6 +1,6 @@
 #!/bin/sh
 
-SCRIPT_VERSION="1.1.1"
+SCRIPT_VERSION="1.2.0"
 
 if [ $# -lt 1 ] || [[ ! $1 =~ ^[0-9] ]]
 then
@@ -61,6 +61,9 @@ xcrun agvtool new-marketing-version $VERSION
 # change Xcode project build number
 NUMBER_OF_COMMITS=$(git rev-list HEAD --count)
 xcrun agvtool new-version -all $NUMBER_OF_COMMITS
+
+# update Settings.bundle
+find . -path '**/Settings.bundle/Root.plist' -exec /usr/libexec/PlistBuddy -c "Set :PreferenceSpecifiers:0:DefaultValue $VERSION" {} \;
 
 # update CHANGELOG.md [Unreleased]
 cd $CURRENT_DIR
