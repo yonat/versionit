@@ -5,17 +5,14 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
-
-### Added
-- only change build number if version is 0.
-
-## [1.2.0] - 2019-07-18
+## [1.2.0] - 2019-07-19
 
 ### Added
 - update Settings.bundle.
 - optional target argument.
 - only change version for specified target (default is same as proj name).
+- only change build number if version is 0.
+- automatically increment last version number if no version (or '-') is specified.
 
 ### Changed
 - don't wait before showing changed files.

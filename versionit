@@ -2,7 +2,7 @@
 
 SCRIPT_VERSION="1.2.0"
 
-if [ $# -lt 1 ] || [[ ! $1 =~ ^[0-9] ]]
+if [[ ! -z $1 ]] && [[ $1 != "-" ]] && [[ ! $1 =~ ^[0-9] ]]
 then
   echo ""
   echo "VersionIt $SCRIPT_VERSION is a script to change the version in several places:"
@@ -13,16 +13,16 @@ then
   echo "  * git tag"
   echo ""
   echo "  Usage:"
-  echo "    $(basename $0) <version> [<target>]"
+  echo "    $(basename $0) [<version>] [<target>]"
   echo ""
   echo "      <version>     version number, or 0 to change only build number."
+  echo "                    (empty or '-' to increment last number.)"
+  echo ""
   echo "      <target>      name of folder containing Info.plist and Settings.bundle."
   echo "                    (default is xcodeproj filename.)"
   echo ""
   exit
 fi
-
-VERSION="$1"
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -47,9 +47,17 @@ then
   exit
 fi
 
-# ensure new version is greater than last one
+# find version
 LATEST_GIT_TAG=$(git describe --tags --always --abbrev=0 --match=$2*)
 LAST_VERSION=${LATEST_GIT_TAG#"$2-"}
+if [[ -z $1 ]] || [[ $1 == "-" ]]
+then
+  VERSION=`echo $LAST_VERSION | awk -F. '{$NF+=1; OFS="."; print $0}'`
+else
+  VERSION="$1"
+fi
+
+# ensure new version is greater than last one
 if [[ $VERSION != 0 ]] && [[ $LAST_VERSION == \d* ]] && [[ ! $LAST_VERSION < $VERSION ]]
 then
   echo -e "${RED}Latest version is $LAST_VERSION, please use a greater version number.${NC}"
