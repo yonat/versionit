@@ -7,12 +7,17 @@ then
   echo ""
   echo "VersionIt $SCRIPT_VERSION is a script to change the version in several places:"
   echo "  * Xcode project version and build number"
+  echo "  * Settings.bundle first DefaultValue"
   echo "  * CHANGELLOG.md [Unreleased] heading"
   echo "  * podspec version (if it exists)"
   echo "  * git tag"
   echo ""
   echo "  Usage:"
   echo "    $(basename $0) <version> [<target>]"
+  echo ""
+  echo "      <version>     version number, or 0 to change only build number."
+  echo "      <target>      name of folder containing Info.plist and Settings.bundle."
+  echo "                    (default is xcodeproj filename.)"
   echo ""
   exit
 fi
@@ -44,13 +49,14 @@ fi
 
 # ensure new version is greater than last one
 LATEST_GIT_TAG=$(git describe --tags --always --abbrev=0 --match=$2*)
-LATEST_GIT_TAG=${LATEST_GIT_TAG#"$2-"}
-if [[ $LATEST_GIT_TAG == \d* ]] && [[ ! $LATEST_GIT_TAG < $VERSION ]]
+LAST_VERSION=${LATEST_GIT_TAG#"$2-"}
+if [[ $VERSION != 0 ]] && [[ $LAST_VERSION == \d* ]] && [[ ! $LAST_VERSION < $VERSION ]]
 then
-  echo -e "${RED}Latest version is $LATEST_GIT_TAG, please use a greater version number.${NC}"
+  echo -e "${RED}Latest version is $LAST_VERSION, please use a greater version number.${NC}"
   exit
 fi
-[[ -z $2 ]] && TAG="$VERSION" || TAG="$2-$VERSION"
+[[ $VERSION == 0 ]] && CURRENT_VERSION="$LAST_VERSION" || CURRENT_VERSION="$VERSION"
+[[ -z $2 ]] && TAG="$CURRENT_VERSION" || TAG="$2-$CURRENT_VERSION"
 
 # change to dir with xcodeproj
 CURRENT_DIR=$(pwd)
@@ -62,51 +68,60 @@ PROJECT_NAME=$(find . -maxdepth 1 -type d -name '*.xcodeproj' -print -quit | xar
 TARGET=${2:-$PROJECT_NAME}
 
 # change Xcode project version
-xcrun agvtool new-marketing-version $VERSION
+if [[ $VERSION != 0 ]]
+then
+  xcrun agvtool new-marketing-version $VERSION
+fi
 
 # change Xcode project build number
 NUMBER_OF_COMMITS=$(git rev-list HEAD --count)
 xcrun agvtool new-version -all $NUMBER_OF_COMMITS
 
-# update Settings.bundle
-SETTINGS_PLIST="./$TARGET/Settings.bundle/Root.plist"
-/usr/libexec/PlistBuddy -c "Set :PreferenceSpecifiers:0:DefaultValue $VERSION '($NUMBER_OF_COMMITS)'" $SETTINGS_PLIST
-
-# update CHANGELOG.md [Unreleased]
-cd $CURRENT_DIR
-CHANGELOG=CHANGELOG.md
-if [ ! -f $CHANGELOG ]
-then
-  CHANGELOG=../CHANGELOG.md
-fi
-if [ ! -f $CHANGELOG ]
-then
-  echo -e "${RED}Cannot find CHANGELOG.md in current directory or its parent.${NC}"
-  exit
-fi
-DATE=`date +%Y-%m-%d`
-echo "Updating $CHANGELOG"
-sed -i '' "s/^## *\[[a-zA-Z]*\].*/## [$TAG] - $DATE/" $CHANGELOG
-
-# update podspec
-PODSPEC=$(find . -name "*.podspec")
-if [ -z $PODSPEC ]
-then
-  PODSPEC=$(find .. -maxdepth 1 -name '*.podspec')
-fi
-if [ ! -z $PODSPEC ]
-then
-  echo "Updating $PODSPEC"
-  sed -i '' "s/$LATEST_GIT_TAG/$VERSION/" $PODSPEC
-fi
-
 # git add changes
-git add $PODSPEC
-git add $CHANGELOG
-git add $SETTINGS_PLIST
 git add -u $TARGET/Info.plist
 git checkout \*Info.plist
 find . -maxdepth 2 -name 'project.pbxproj' -exec git add -u {} \;
+
+# update Settings.bundle
+SETTINGS_PLIST="./$TARGET/Settings.bundle/Root.plist"
+/usr/libexec/PlistBuddy -c "Set :PreferenceSpecifiers:0:DefaultValue $CURRENT_VERSION '($NUMBER_OF_COMMITS)'" $SETTINGS_PLIST
+git add $SETTINGS_PLIST
+
+# update CHANGELOG.md [Unreleased]
+if [[ $VERSION != 0 ]]
+then
+  cd $CURRENT_DIR
+  CHANGELOG=CHANGELOG.md
+  if [ ! -f $CHANGELOG ]
+  then
+    CHANGELOG=../CHANGELOG.md
+  fi
+  if [ ! -f $CHANGELOG ]
+  then
+    echo -e "${RED}Cannot find CHANGELOG.md in current directory or its parent.${NC}"
+    exit
+  fi
+  DATE=`date +%Y-%m-%d`
+  echo "Updating $CHANGELOG"
+  sed -i '' "s/^## *\[[a-zA-Z]*\].*/## [$TAG] - $DATE/" $CHANGELOG
+  git add $CHANGELOG
+fi
+
+# update podspec
+if [[ $VERSION != 0 ]]
+then
+  PODSPEC=$(find . -name "*.podspec")
+  if [ -z $PODSPEC ]
+  then
+    PODSPEC=$(find .. -maxdepth 1 -name '*.podspec')
+  fi
+  if [ ! -z $PODSPEC ]
+  then
+    echo "Updating $PODSPEC"
+    sed -i '' "s/$LAST_VERSION/$VERSION/" $PODSPEC
+    git add $PODSPEC
+  fi
+fi
 
 # review changes
 git diff --cached
@@ -121,8 +136,13 @@ do
 done
 
 # commit and push
-git commit -m "bump version to $TAG"
-git tag $TAG
+if [[ $VERSION != 0 ]]
+then
+  git commit -m "bump version to $TAG"
+  git tag $TAG
+else
+  git commit -m "bump build to $TAG ($NUMBER_OF_COMMITS)"
+fi
 git push
 git push --tags
 
