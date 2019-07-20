@@ -1,8 +1,9 @@
 **VersionIt** is a script to change the version in several places:
 
 * Xcode project version and build number
+* Settings.bundle first DefaultValue
 * CHANGELLOG.md [Unreleased] heading
-* podspec version (if it exists)
+* podspec version
 * git tag
 
 ## Installation
@@ -11,4 +12,7 @@
     $ mv versionit /usr/local/bin
 
 ## Usage
-    $ versionit <version>
+
+See help:
+
+    $ versionit -h
