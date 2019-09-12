@@ -1,6 +1,6 @@
 #!/bin/sh
 
-SCRIPT_VERSION="1.2.0"
+SCRIPT_VERSION="1.2.1"
 
 if [[ ! -z $1 ]] && [[ $1 != "-" ]] && [[ ! $1 =~ ^[0-9] ]]
 then
@@ -8,9 +8,10 @@ then
   echo "VersionIt $SCRIPT_VERSION is a script to change the version in several places:"
   echo "  * Xcode project version and build number"
   echo "  * Settings.bundle first DefaultValue"
-  echo "  * CHANGELLOG.md [Unreleased] heading"
   echo "  * podspec version"
   echo "  * git tag"
+  echo "  * CHANGELOG.md [Unreleased] heading"
+  echo "  * README.md occurences of old version number"
   echo ""
   echo "  Usage:"
   echo "    $(basename $0) [<version>] [<target>]"
@@ -120,6 +121,24 @@ then
   echo "Updating $CHANGELOG"
   sed -i '' "s/^## *\[[a-zA-Z]*\].*/## [$TAG] - $DATE/" $CHANGELOG
   git add $CHANGELOG
+fi
+
+# update README.md
+if [[ $VERSION != 0 ]]
+then
+  cd $CURRENT_DIR
+  README=README.md
+  if [ ! -f $README ]
+  then
+    README=../README.md
+  fi
+  if [ -f $README ]
+  then
+    echo "Updating $README"
+    ESCAPED_LAST_VERSION=${LAST_VERSION//./\\.}
+    sed -i '' "s/$ESCAPED_LAST_VERSION/$TAG/" $README
+    git add $README
+  fi
 fi
 
 # update podspec

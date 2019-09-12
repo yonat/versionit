@@ -2,9 +2,10 @@
 
 * Xcode project version and build number
 * Settings.bundle first DefaultValue
-* CHANGELLOG.md [Unreleased] heading
 * podspec version
 * git tag
+* CHANGELOG.md [Unreleased] heading
+* README.md occurences of old version number
 
 ## Installation
 
