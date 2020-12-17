@@ -1,6 +1,6 @@
 #!/bin/bash
 
-SCRIPT_VERSION="1.2.2"
+SCRIPT_VERSION="1.2.3"
 
 if [[ -n $1 ]] && [[ $1 != "-" ]] && [[ ! $1 =~ ^[0-9] ]]
 then
@@ -189,7 +189,7 @@ then
   if [ $? -eq 0 ]
   then
     cd "$(dirname "$PODSPEC")"
-    pod trunk push
+    pod trunk push --allow-warnings
   fi
 fi
 
