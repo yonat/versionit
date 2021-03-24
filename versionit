@@ -113,15 +113,13 @@ then
   then
     CHANGELOG=../CHANGELOG.md
   fi
-  if [ ! -f $CHANGELOG ]
+  if [ -f $CHANGELOG ]
   then
-    echo -e "${RED}Cannot find CHANGELOG.md in current directory or its parent.${NC}"
-    exit
+      DATE=$(date +%Y-%m-%d)
+      echo "Updating $CHANGELOG"
+      sed -i '' "s/^## *\[[a-zA-Z]*\].*/## [$TAG] - $DATE/" $CHANGELOG
+      git add $CHANGELOG
   fi
-  DATE=$(date +%Y-%m-%d)
-  echo "Updating $CHANGELOG"
-  sed -i '' "s/^## *\[[a-zA-Z]*\].*/## [$TAG] - $DATE/" $CHANGELOG
-  git add $CHANGELOG
 fi
 
 # update README.md
