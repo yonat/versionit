@@ -1,6 +1,6 @@
 #!/bin/bash
 
-SCRIPT_VERSION="1.2.3"
+SCRIPT_VERSION="1.2.5"
 
 if [[ -n $1 ]] && [[ $1 != "-" ]] && [[ ! $1 =~ ^[0-9] ]]
 then
@@ -61,7 +61,7 @@ LATEST_GIT_TAG=$(git describe --tags --always --abbrev=0 --match "${TARGET_PATTE
 LAST_VERSION=${LATEST_GIT_TAG#"$2-"}
 if [[ -z $1 ]] || [[ $1 == "-" ]]
 then
-  VERSION=$(echo "$LAST_VERSION" | awk -F. '{$NF+=1; OFS="."; print $0}')
+  VERSION=$(echo "$LAST_VERSION" | awk -F. '{OFS="."; $NF+=1; print $0}')
 else
   VERSION="$1"
 fi
