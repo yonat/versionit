@@ -1,8 +1,16 @@
 #!/bin/bash
 
-SCRIPT_VERSION="1.2.5"
+SCRIPT_VERSION="1.3.0"
 
-if [[ -n $1 ]] && [[ $1 != "-" ]] && [[ ! $1 =~ ^[0-9] ]]
+ARGV=()
+for var in "$@"; do
+    [ "$var" == '-f' ] && FORCE_ARG=1 || ARGV+=("$var")
+done
+
+VERSION_ARG=${ARGV[0]}
+TARGET_ARG=${ARGV[1]}
+
+if [[ -n $VERSION_ARG ]] && [[ $VERSION_ARG != "-" ]] && [[ ! $VERSION_ARG =~ ^[0-9] ]]
 then
   echo ""
   echo "VersionIt $SCRIPT_VERSION is a script to change the version in several places:"
@@ -14,7 +22,7 @@ then
   echo "  * README.md occurences of old version number"
   echo ""
   echo "  Usage:"
-  echo "    $(basename "$0") [<version>] [<target>]"
+  echo "    $(basename "$0") [<version>] [<target>] [-f]"
   echo ""
   echo "      <version>     Version number."
   echo "                    Empty or '-' to increment last number."
@@ -22,6 +30,8 @@ then
   echo ""
   echo "      <target>      Name of folder containing Info.plist and Settings.bundle."
   echo "                    Empty to use xcodeproj filename."
+  echo ""
+  echo "      -f            Execute silently without asking to review changes"
   echo ""
   echo "  Examples:"
   echo "    $(basename "$0")                      Increment version"
@@ -58,22 +68,22 @@ fi
 # find version
 TARGET_PATTERN=${2:-[0-9]}
 LATEST_GIT_TAG=$(git describe --tags --always --abbrev=0 --match "${TARGET_PATTERN}*")
-LAST_VERSION=${LATEST_GIT_TAG#"$2-"}
-if [[ -z $1 ]] || [[ $1 == "-" ]]
+LAST_VERSION=${LATEST_GIT_TAG#"$TARGET_ARG-"}
+if [[ -z $VERSION_ARG ]] || [[ $VERSION_ARG == "-" ]]
 then
   VERSION=$(echo "$LAST_VERSION" | awk -F. '{OFS="."; $NF+=1; print $0}')
 else
-  VERSION="$1"
+  VERSION="$VERSION_ARG"
 fi
 
 # ensure new version is greater than last one
-if [[ $VERSION != 0 ]] && [[ $LAST_VERSION == \d* ]] && [[ ! $LAST_VERSION < $VERSION ]]
+if [[ $VERSION != 0 ]] && [[ $LAST_VERSION =~ [[:digit:]] ]] && [[ ! $LAST_VERSION < $VERSION ]]
 then
   echo -e "${RED}Latest version is $LAST_VERSION, please use a greater version number.${NC}"
   exit
 fi
 [[ $VERSION == 0 ]] && CURRENT_VERSION="$LAST_VERSION" || CURRENT_VERSION="$VERSION"
-[[ -z $2 ]] && TAG="$CURRENT_VERSION" || TAG="$2-$CURRENT_VERSION"
+[[ -z $TARGET_ARG ]] && TAG="$CURRENT_VERSION" || TAG="$TARGET_ARG-$CURRENT_VERSION"
 
 # change to dir with xcodeproj
 CURRENT_DIR=$(pwd)
@@ -101,8 +111,11 @@ find . -maxdepth 2 -name 'project.pbxproj' -exec git add -u {} \;
 
 # update Settings.bundle
 SETTINGS_PLIST="./$TARGET/Settings.bundle/Root.plist"
-/usr/libexec/PlistBuddy -c "Set :PreferenceSpecifiers:0:DefaultValue $CURRENT_VERSION '($NUMBER_OF_COMMITS)'" "$SETTINGS_PLIST"
-git add "$SETTINGS_PLIST"
+if [ -f "$SETTINGS_PLIST" ]
+then
+  /usr/libexec/PlistBuddy -c "Set :PreferenceSpecifiers:0:DefaultValue $CURRENT_VERSION '($NUMBER_OF_COMMITS)'" "$SETTINGS_PLIST"
+  git add "$SETTINGS_PLIST"
+fi
 
 # update CHANGELOG.md [Unreleased]
 if [[ $VERSION != 0 ]]
@@ -157,16 +170,21 @@ then
 fi
 
 # review changes
-git diff --cached
-echo -e "\n\n${BLUE}Confirm these changes and commit?${NC}"
-select yn in Yes No Cherrypick
-do
-  case $yn in
-    Yes ) break;;
-    No ) echo -e "${BLUE}\nSorry, my bad. Please review git status and cleanup the mess.${NC}"; exit;;
-    Cherrypick ) git reset; git add -p; break;;
-  esac
-done
+if [ -z "$FORCE_ARG" ]
+then
+  git diff --cached
+  echo -e "\n\n${BLUE}Confirm these changes and commit?${NC}"
+  select yn in Yes No Cherrypick
+  do
+    case $yn in
+      Yes ) break;;
+      No ) echo -e "${BLUE}\nSorry, my bad. Please review git status and cleanup the mess.${NC}"; exit;;
+      Cherrypick ) git reset; git add -p; break;;
+    esac
+  done
+fi
+
+exit
 
 # commit and push
 if [[ $VERSION != 0 ]]
