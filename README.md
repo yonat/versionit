@@ -5,9 +5,15 @@
 * podspec version
 * git tag
 * CHANGELOG.md [Unreleased] heading
-* README.md occurences of old version number
+* README.md occurrences of old version number
 
 ## Installation
+
+With `curl`:
+
+    $ curl --create-dirs -O --output-dir /usr/local/bin https://raw.githubusercontent.com/yonat/versionit/HEAD/versionit && chmod a+x /usr/local/bin/versionit
+
+Alternatively, clone the repo and then:
 
     $ chmod 755 versionit
     $ mv versionit /usr/local/bin
