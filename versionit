@@ -1,6 +1,6 @@
 #!/bin/bash
 
-SCRIPT_VERSION="1.3.0"
+SCRIPT_VERSION="1.3.1"
 
 ARGV=()
 for var in "$@"; do
@@ -183,8 +183,6 @@ then
     esac
   done
 fi
-
-exit
 
 # commit and push
 if [[ $VERSION != 0 ]]
