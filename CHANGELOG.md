@@ -5,10 +5,18 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.3.3] - 2022-05-25
+
+### Changed
+- when only changing build number (using `versionit 0`) tag with `<version>#<build>`.
 
 ### Fixed
 - only push most recent tag, not all tags.
+
+## [1.3.2] - 2022-03-25
+
+### Fixed
+- fix comparison to last version.
 
 ## [1.3.1] - 2022-03-10
 

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-SCRIPT_VERSION="1.3.2"
+SCRIPT_VERSION="1.3.3"
 
 ARGV=()
 for var in "$@"; do
@@ -103,6 +103,7 @@ fi
 # change Xcode project build number
 NUMBER_OF_COMMITS=$(git rev-list HEAD --count)
 xcrun agvtool new-version -all "$NUMBER_OF_COMMITS"
+[[ $VERSION == 0 ]] && TAG="$TAG#$NUMBER_OF_COMMITS"
 
 # git add changes
 git add -u "$TARGET"/Info.plist
