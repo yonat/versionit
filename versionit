@@ -193,7 +193,7 @@ else
   git commit -m "bump build to $TAG ($NUMBER_OF_COMMITS)"
 fi
 git push
-git push --tags
+git push origin "$TAG"
 
 # update cocoapods
 if [ -n "$PODSPEC" ]
