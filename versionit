@@ -1,6 +1,6 @@
 #!/bin/bash
 
-SCRIPT_VERSION="1.3.3"
+SCRIPT_VERSION="1.3.4"
 
 ARGV=()
 for var in "$@"; do
@@ -49,9 +49,10 @@ NC='\033[0m' # No Color
 
 # ensure current branch is master
 BRANCH=$(git rev-parse --abbrev-ref HEAD)
-if [ "$BRANCH" != "master" ]
+MAIN_BRANCH=$(LC_ALL=C git remote show origin | sed -n '/HEAD branch/s/.*: //p')
+if [ "$BRANCH" != "$MAIN_BRANCH" ]
 then
-  echo -e "${RED}Current branch is '$BRANCH', please checkout 'master'.${NC}"
+  echo -e "${RED}Current branch is '$BRANCH', please checkout '$MAIN_BRANCH'.${NC}"
   exit
 fi
 
