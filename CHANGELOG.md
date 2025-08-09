@@ -5,6 +5,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [1.3.5] - 2025-08-09
+
+### Fixed
+- fix version comparison to handle multi-digit version numbers correctly (e.g., 1.4.9 < 1.4.10).
+
 ## [1.3.4] - 2022-07-17
 
 ### Fixed

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-SCRIPT_VERSION="1.3.4"
+SCRIPT_VERSION="1.3.5"
 
 ARGV=()
 for var in "$@"; do
@@ -78,7 +78,7 @@ else
 fi
 
 # ensure new version is greater than last one
-if [[ $VERSION != 0 ]] && [[ $LAST_VERSION =~ [[:digit:]] ]] && [[ ! $LAST_VERSION < $VERSION ]]
+if [[ $VERSION != 0 ]] && [[ $LAST_VERSION =~ [[:digit:]] ]] && [[ $(echo -e "$LAST_VERSION\n$VERSION" | sort -V | head -1) != "$LAST_VERSION" ]]
 then
   echo -e "${RED}Latest version is $LAST_VERSION, please use a greater version number.${NC}"
   exit
